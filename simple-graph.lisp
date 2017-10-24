@@ -7,6 +7,9 @@
 (defgeneric nodes (graph))
 (defgeneric node-count (graph))
 (defgeneric edge-count (graph))
+(defgeneric depth-first-search (graph function start))
+(defgeneric breadth-first-search (graph function start))
+
 (defgeneric to-dot (graph stream))
 (defgeneric to-png (graph file-name))
 
@@ -42,8 +45,47 @@
     (length adjacency-list)))
 
 (defmethod edge-count ((graph graph))
-  (With-slots (adjacency-list) graph
+  (with-slots (adjacency-list) graph
     (/ (apply #'+ (mapcar (compose #'length #'cdr) adjacency-list)) 2)))
+
+(defmethod depth-first-search ((graph graph) function start)
+  (let ((visited nil))
+    (with-slots (adjacency-list) graph
+      (labels
+          ((dfs (node)
+             (when (not (member node visited))
+               (let ((starting (assoc node adjacency-list)))
+                 (when starting
+                   (pushnew (car starting) visited)
+                   (dolist (next (cdr starting))
+                     (when (not (member next visited))
+                       (dfs next)))
+                   (funcall function (car starting)))))))
+        (dfs start)))))
+
+(defmethod breadth-first-search ((graph graph) function start)
+  (let ((visited nil))
+    (with-slots (adjacency-list) graph
+      (labels
+          ((bfs (node depth)
+             (let ((starting (assoc node adjacency-list)))
+               (cond
+                   ((and starting (= 0 depth) (not (member node visited)))
+                    (pushnew node visited)
+                    (funcall function node)
+                    (set-difference (cdr starting) visited))
+                   ((and starting)
+                    (if (> depth 0)
+                                    (apply (curry #'concatenate 'list)
+                                           (mapcar (lambda (next)
+                                                     (if next
+                                                         (bfs next (- depth 1))
+                                                         nil))
+                                                   (cdr starting)))
+                                    nil))
+                   (t nil)))))
+        (loop for i from 0
+           while (bfs start i))))))
 
 (defmethod to-dot ((graph graph) stream)
   (with-slots (adjacency-list) graph
@@ -59,9 +101,6 @@
     (with-input-from-string (ins dot-graph)
       (let ((command (format nil "dot -Tpng -o\"~a\"" file-name)))
         (uiop:run-program command :input ins :force-shell t :output t :error-output t)))))
-
-
-
 
 (defmethod add-edge ((graph digraph) first second)
   (add-node graph first)
