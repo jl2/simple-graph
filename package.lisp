@@ -12,6 +12,8 @@
            #:add-edge
            #:node-count
            #:edge-count
+           #:in-degree
+           #:out-degree
            #:nodes
            #:to-dot
            #:to-png

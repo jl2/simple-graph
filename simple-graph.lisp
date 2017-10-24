@@ -9,7 +9,8 @@
 (defgeneric edge-count (graph))
 (defgeneric depth-first-search (graph function start))
 (defgeneric breadth-first-search (graph function start))
-
+(defgeneric in-degree (graph node))
+(defgeneric out-degree (graph node))
 (defgeneric to-dot (graph stream))
 (defgeneric to-png (graph file-name))
 
@@ -86,6 +87,14 @@
                    (t nil)))))
         (loop for i from 0
            while (bfs start i))))))
+
+(defmethod out-degree ((graph graph) node)
+  (with-slots (adjacency-list) graph
+    (length (cdr (assoc node adjacency-list)))))
+
+(defmethod in-degree ((graph graph) node)
+  (with-slots (adjacency-list) graph
+    (apply #'+ (mapcar (compose (curry #'count node) #'cdr) adjacency-list))))
 
 (defmethod to-dot ((graph graph) stream)
   (with-slots (adjacency-list) graph
