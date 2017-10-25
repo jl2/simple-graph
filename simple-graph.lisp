@@ -94,7 +94,8 @@
 
 (defmethod in-degree ((graph graph) node)
   (with-slots (adjacency-list) graph
-    (apply #'+ (mapcar (compose (curry #'count node) #'cdr) adjacency-list))))
+    (loop for next-node in adjacency-list
+       summing (count node (cdr next-node)))))
 
 (defmethod to-dot ((graph graph) stream)
   (with-slots (adjacency-list) graph
