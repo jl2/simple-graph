@@ -92,10 +92,13 @@
   (with-slots (adjacency-list) graph
     (length (cdr (assoc node adjacency-list)))))
 
+(defun my-count (item list)
+  (loop for it in list when (= item it) summing 1))
+
 (defmethod in-degree ((graph graph) node)
   (with-slots (adjacency-list) graph
     (loop for next-node in adjacency-list
-       summing (count node (cdr next-node)))))
+       summing (my-count node (cdr next-node)))))
 
 (defmethod to-dot ((graph graph) stream)
   (with-slots (adjacency-list) graph
